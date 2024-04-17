@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import csv
 import os
-import matplotlib.pyplot as plt
 import datetime
 
 # Define the file path for storing patient data
@@ -55,18 +54,11 @@ def display_patient_metrics_chart():
         for row in reader:
             date_time = datetime.datetime.strptime(row["datetime"], "%Y-%m-%d %H:%M:%S")
             for metric in patient_data:
-                  patient_data[metric].append(float(row[metric.lower().replace(' ', '_')]))
+                patient_data[metric].append(float(row[metric.lower().replace(' ', '_')]))
 
     # Plot patient metrics for each patient
     if patient_data:
-        fig, ax = plt.subplots()
-        for metric, values in patient_data.items():
-            ax.plot(patient_data["weight"], values, label=metric)
-        ax.set_xlabel("Weight (kg)")
-        ax.set_ylabel("Metrics")
-        ax.set_title("Patient Metrics Progression")
-        ax.legend()
-        st.pyplot(fig)
+        st.line_chart(pd.DataFrame(patient_data), use_container_width=True)
 
 # Function to display weight progression chart
 def display_weight_progression_chart():
@@ -83,15 +75,7 @@ def display_weight_progression_chart():
 
     # Plot weight progression for each patient
     if weight_data:
-        fig, ax = plt.subplots()
-        for patient_name, data in weight_data.items():
-            ax.plot(data["datetimes"], data["weights"], label=patient_name)
-        ax.set_xlabel("Date and Time")
-        ax.set_ylabel("Weight (kg)")
-        ax.set_title("Weight Progression")
-        ax.legend()
-        plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
-        st.pyplot(fig)
+        st.line_chart(pd.DataFrame(weight_data), use_container_width=True)
 
 
 

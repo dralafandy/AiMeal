@@ -274,7 +274,7 @@ def user_input_page():
     weight_loss = st.sidebar.checkbox("Weight loss")
     weight_gain = st.sidebar.checkbox("Weight gain")
     maintenance = st.sidebar.checkbox("Maintenance")
-    fitness = st.sidebar.checkbox("Fitness")
+    fitness = st.sidebar.checkbox("Fitness", True)
     rapid_weight_loss = st.sidebar.checkbox("Rapid Weight Loss")
 
     goals = []

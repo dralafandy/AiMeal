@@ -225,7 +225,7 @@ def user_input_page():
     st.title("Ai Calorie Calculator and Meal Generator")
     st.markdown(f"<h1 style='text-align: center; font-size: 12px;background-color: lightgreen; padding: 10px;'>Programmed by Afandy  .  Supervised By : Dr Hassan and Dr Gehad</h1>", unsafe_allow_html=True)
 
-    st.warning(f"Choose your weight goal from the side bar befor calculating and *Results*")
+    st.warning(f"Choose your weight goal from the side bar befor *calculating* and *Results* ** Defual goal is Ideal body weight**")
     # Title
     st.title("Patient Data")
 

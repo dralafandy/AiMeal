@@ -1,4 +1,4 @@
-Meal Number,Meal Name,Calories,Ingredients,Weight (g),Volume,Protein (g),Carbohydrates (g),Fat (g),Meal Type,Sensitivity,Category,Meal Category
+Meal Number,Meal Name,Calories,Ingredients,Weight (g),Volume,Protein (g),Carbohydrates (g),Fat (g),Meal Type,Sensitivity,Meal Category,Category
 1,سباجيتي بولونيز,550,"معكرونة (200g), صلصة طماطم (100g), لحم بقر مفروم (250g)",550,,30,75,15,High Calorie,Normal,Main Course,الغداء
 2,سلطة يونانية,300,"خس (150g), طماطم (100g), خيار (50g), جبنة فيتا (50g)",350,,10,25,5,Low Fat,Normal,Side Dish,الغداء
 3,ستري فراي دجاج,400,"صدور دجاج (200g), فلفل حار (50g), قرنبيط (50g), صلصة صويا (50g)",350,,35,30,10,High Carb,Normal,Main Course,الغداء
@@ -7,7 +7,7 @@ Meal Number,Meal Name,Calories,Ingredients,Weight (g),Volume,Protein (g),Carbohy
 6,شوربة خضار,150,"بطاطس (100g), جزر (100g), بازيلاء (50g), ماء (200g)",450,,5,30,2,Low Calorie,Normal,Starter,الفطار
 7,كشري,450,"أرز (100g), عدس (100g), باستا (100g), حمص (100g), صلصة طماطم (50g), بصل مقلي (50g)",500,,15,80,10,High Carb,Normal,Main Course,الغداء
 8,ملوخية,300,"ورق ملوخية (200g), مرقة دجاج (100g), ثوم (10g), كزبرة (10g)",320,,20,15,10,Low Carb,Normal,Main Course,الغداء
-9,فتة,400,"خبز بيتا (100g), زبادي (100g), حمص (100g), صلصة طحينة (50g), صنوبر (50g)",400,,10,60,20,High Fat,Normal,Main Course,الفطار
+9,فتة,400,"خبز بيتا (100g), زبادي (100g), حمص (100g), صلصة طحينة (50g), صنوبر (50g)",400,,10,60,20,High Fat,Normal,Main Course,الغداء
 10,شاورما,600,"لحم متبل (200g), صلصة ثوم (50g), خيار مخلل (50g), خبز بيتا (100g)",400,,25,40,30,High Calorie,Normal,Main Course,الغداء
 11,حواوشي,350,"لحم مفروم (200g), بصل (50g), بهارات (10g), عجينة القمح الكامل (40g)",300,,15,25,15,Low Calorie,Normal,Main Course,الغداء
 12,بامية,250,"بامية (200g), صلصة طماطم (50g), ثوم (10g), كزبرة (10g)",260,,5,20,3,Low Calorie,Normal,Main Course,الغداء
@@ -17,7 +17,7 @@ Meal Number,Meal Name,Calories,Ingredients,Weight (g),Volume,Protein (g),Carbohy
 16,سلطة بلدي,100,"طماطم (100g), خيار (100g), بصل (20g), بقدونس (10g), عصير ليمون (20g)",250,,2,15,1,Low Calorie,Normal,Side Dish,الفطار
 17,كنافة,200,"كنافة (100g), قطر (50g), مكسرات (50g)",200,,5,30,7,Low Calorie,Normal,Dessert,السناكس
 19,كباب حلبي,180,"لحم مفروم (150g), بصل (30g), بقدونس (10g), بهارات (10g)",200,,12,5,10,Low Calorie,Normal,Main Course,الغداء
-20,سياية,220,"سمك أبيض (150g), أرز (50g), بصل (20g), صلصة طماطم (20g), بهارات (10g)",250,,20,30,5,Low Calorie,Normal,Main Course,الغداء
+20,صيادية,220,"سمك أبيض (150g), أرز (50g), بصل (20g), صلصة طماطم (20g), بهارات (10g)",250,,20,30,5,Low Calorie,Normal,Main Course,الغداء
 21,شكشوكة,180,"بيض (150g), طماطم (100g), فلفل حلو (50g), بصل (30g), بهارات (10g)",340,,10,15,12,Low Calorie,Normal,Main Course,الفطار
 22,مسقعة,200,"باذنجان (150g), بطاطس (100g), لحم مفروم (100g), صلصة طماطم (50g), جبنة (50g)",450,,15,20,8,Low Calorie,Normal,Main Course,الغداء
 23,تبولة,150,"برغل (50g), بقدونس (100g), طماطم (50g), بصل (20g), عصير ليمون (10g), زيت زيتون (10g)",240,,5,30,3,Low Calorie,Normal,Salad,الغداء
@@ -32,7 +32,7 @@ Meal Number,Meal Name,Calories,Ingredients,Weight (g),Volume,Protein (g),Carbohy
 32,كفتة,300,"لحم مفروم (200g), بصل (30g), بقدونس (10g), بهارات (10g)",250,,20,10,15,Normal,Normal,Main Course,الغداء
 33,ملوخية مع دجاج,350,"ورق ملوخية (200g), دجاج (100g), ثوم (10g), كزبرة (10g)",320,,25,40,10,Normal,Normal,Main Course,الغداء
 34,بسناي,300,"سمك أبيض (150g), أرز (50g), صلصة طماطم (50g), بصل (20g), ثوم (10g), بهارات (20g)",300,,25,45,10,Normal,Normal,Main Course,الغداء
-35,ورق عنب محشي,250,"ورق عنب (200g), أرز (50g), طماطم (20g), بصل (10g), عصير ليمون (10g)",290,,10,50,5,Normal,Normal,Appetizer,السناكس
+35,ورق عنب محشي,250,"ورق عنب (200g), أرز (50g), طماطم (20g), بصل (10g), عصير ليمون (10g)",290,,10,50,5,Normal,Normal,Appetizer,الغداء
 36,فاصوليا,200,"فاصوليا خضراء (200g), طماطم (50g), بصل (20g), ثوم (10g), زيت زيتون (10g)",290,,8,35,5,Normal,Normal,Main Course,الغداء
 37,مكرونة بالبشاميل,400,"مكرونة (200g), حليب (100g), طحين (20g), زبدة (20g), جبنة (10g)",400,,20,40,15,Normal,Normal,Main Course,الغداء
 38,حواوشي,350,"لحم مفروم (200g), بصل (50g), بهارات (10g), عجينة القمح الكامل (90g)",350,,15,25,15,Normal,Normal,Main Course,الغداء

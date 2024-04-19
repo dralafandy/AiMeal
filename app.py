@@ -21,86 +21,6 @@ def save_patient_data(patient_data):
         writer.writerow(patient_data)
 
 
-# Function to search for a patient by name
-def search_patient_by_name(patient_name):
-    with open(DATA_FILE, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row["patient_name"] == patient_name:
-                return row
-    return None
-
-# Function to update patient data
-def update_patient_data(patient_name, updated_data):
-    rows = []
-    with open(DATA_FILE, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row["patient_name"] == patient_name:
-                row.update(updated_data)
-            rows.append(row)
-    
-    with open(DATA_FILE, mode='w', newline='') as file:
-        fieldnames = rows[0].keys() if rows else []
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
-def display_patient_metrics_chart():
-    st.title("Patient Metrics Chart")
-    patient_data = {"weight": [], "body_fat_percentage": [], "lean_body_mass": [], "waist_to_hip_ratio": []}
-    
-    # Textbox for user to input the patient name
-    selected_patient = st.text_input("Enter patient name:", key="patient1_name_input")
-    
-    if selected_patient:  # Check if a patient name is provided
-        with open(DATA_FILE, mode='r') as file:
-            reader = csv.DictReader(file)
-            patient_found = False
-            for row in reader:
-                if row["patient_name"] == selected_patient:
-                    patient_found = True
-                    for metric in patient_data:
-                        patient_data[metric].append(float(row[metric.lower().replace(' ', '_')]))
-        
-        if not patient_found:
-            st.write("Patient not found.")
-        else:
-            # Plot patient metrics for the selected patient
-            if patient_data:
-                chart_data = pd.DataFrame(patient_data)
-                st.line_chart(chart_data, use_container_width=True)
-
-# To display the chart in a new page, call the function in a separate script tag
-
-
-
-# Function to display weight progression chart
-def display_weight_progression_chart():
-    st.title("Weight Progression Chart")
-    weight_data_rows = []
-    with open(DATA_FILE, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            weight_data_rows.append({
-                "Patient Name": row["patient_name"],  # Customizing the column name
-                "Date": datetime.datetime.strptime(row["datetime"], "%Y-%m-%d %H:%M:%S").date(),  # Extracting date from datetime
-                "Weight (kg)": float(row["weight"])  # Customizing the column name
-            })
-
-    # Convert the list of dictionaries into a DataFrame
-    weight_df = pd.DataFrame(weight_data_rows)
-
-    # Set 'Date' column as the index
-    weight_df.set_index('Date', inplace=True)
-
-    # Plot weight progression for each patient
-    if not weight_df.empty:
-        st.line_chart(weight_df, use_container_width=True)
-
-
-
-
 def calculate_bmi(weight, height):
   return weight / ((height / 100)**2)
 
@@ -180,6 +100,17 @@ def calculate_tbw(weight, height, age, gender):
 
   return 0.3669 * k - 0.0906 * weight + 0.1074 * height + 0.2466 * weight
 
+
+def get_patient_weight_data(patient_data, patient_name):
+    # Placeholder implementation - Replace with actual data retrieval logic
+    # This function should retrieve weight data for the specified patient
+    if patient_data:
+        return patient_data.get('weight', {})
+    else:
+        return {}
+
+
+
 def display_patient_data_page(patient_data):
     st.title("Patient Data")
     st.write(f"Patient Name: {patient_data['patient_name']}")
@@ -191,43 +122,34 @@ def display_patient_data_page(patient_data):
     st.write(f"Waist-to-Hip Ratio: {patient_data['waist_to_hip_ratio']}")
     st.write(f"Lean Body Mass (kg): {patient_data['lean_body_mass']}")
 
-# Function to display all patient data
-def display_all_patient_data():
-    st.title("All Patient Data")
-    patient_weight_data = {}
-    with open(DATA_FILE, mode='r') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            st.write("Patient Name:", row["patient_name"])
-            st.write("Age:", row["age"])
-            st.write("Gender:", row["gender"])
-            st.write("Weight (kg):", row["weight"])
-            st.write("Height (cm):", row["height"])
-            st.write("Body Fat Percentage (%):", row["body_fat_percentage"])
-            st.write("Waist-to-Hip Ratio:", row["waist_to_hip_ratio"])
-            st.write("Lean Body Mass (kg):", row["lean_body_mass"])
-            st.write("")
 
-            # Store weight data for each patient
-            patient_weight_data[row["patient_name"]] = float(row["weight"])
-
-    # Plot weight progression for each patient
-    if patient_weight_data:
-        st.subheader("Weight Progression")
-        fig, ax = plt.subplots()
-        ax.bar(patient_weight_data.keys(), patient_weight_data.values())
-        ax.set_xlabel("Patient Name")
-        ax.set_ylabel("Weight (kg)")
-        ax.set_title("Weight Progression for Each Patient")
-        st.pyplot(fig)
-
-
+    return pdf_path
 
 # Define function to read meals and their calorie counts from CSV
 def read_meals_from_csv(csv_file):
   meals_df = pd.read_csv("food.csv", encoding='utf-8-sig')
   return meals_df
+# Save the meal plan as an image
+# Function to save meal plan as an image
+def save_meal_plan_as_image(meal_plan):
+    # Create a blank image with white background
+    image = Image.new('RGB', (800, 600), 'white')
+    draw = ImageDraw.Draw(image)
 
+    # Set font and size
+    font = ImageFont.truetype('arial.ttf', 24)
+
+    # Draw meal plan text
+    y = 50
+    for category, meals in meal_plan.items():
+        draw.text((50, y), category, fill='black', font=font)
+        y += 50
+        for meal_info in meals:
+            draw.text((100, y), f"{meal_info['Meal']} - Calories: {meal_info['Calories']}", fill='black', font=font)
+            y += 30
+
+    # Save the image
+    image.save('meal_plan.png')
 
 def generate_meal_plan(calorie_intake, meals_df):
     # Define the calorie distribution for each meal category based on the user's input calorie intake
@@ -273,61 +195,8 @@ def generate_meal_plan(calorie_intake, meals_df):
     return meal_plan
 
 
-def generate_multi_day_meal_plan(calorie_intake, meals_df, num_days):
-    # Define the calorie distribution for each meal category
-    meal_categories = {
-        "الفطار": 0.25,
-        "الغداء": 0.40,
-        "العشاء": 0.25,
-        "سناكس": 0.10
-    }
-
-    # Initialize a dictionary to store the meal plan for each day
-    multi_day_meal_plan = {day: None for day in range(1, num_days + 1)}
-
-    for day in range(1, num_days + 1):
-        # Calculate the calorie allowance for each meal category for the day
-        calorie_allowance = {category: calorie_intake * percentage for category, percentage in meal_categories.items()}
-
-        # Initialize empty lists to store selected meals for each category
-        meal_plan = {category: [] for category in meal_categories}
-
-        # Shuffle the DataFrame to get random meals
-        shuffled_meals = meals_df.sample(frac=1).reset_index(drop=True)
-
-        for index, row in shuffled_meals.iterrows():
-            meal_name = row["Meal Name"]
-            meal_calories = row["Calories"]
-            
-            # Check if the meal fits into any of the categories based on remaining calorie allowance
-            for category, allowance in calorie_allowance.items():
-                if meal_calories <= allowance:
-                    # Add the meal to the corresponding category
-                    meal_plan[category].append({
-                        "Meal": meal_name,
-                        "Calories": meal_calories,
-                        "Ingredients": row["Ingredients"],
-                        "Weight (g)": row["Weight (g)"],
-                        "Protein (g)": row["Protein (g)"],
-                        "Carbohydrates (g)": row["Carbohydrates (g)"],
-                        "Fat (g)": row["Fat (g)"],
-                        "Meal Type": row["Meal Type"]
-                    })
-                    # Deduct the calories of the meal from the remaining allowance for the category
-                    calorie_allowance[category] -= meal_calories
-                    break  # Move to the next meal once added to a category
-
-        # Store the meal plan for the day
-        multi_day_meal_plan[day] = meal_plan
-
-    return multi_day_meal_plan
-
-
-
-
 
 def display_meal_plan(meal_plan):
-  st.subheader("Ai Meal Plan:")
   total_calories = 0
   for category, meals in meal_plan.items():
     st.write("----")
@@ -335,7 +204,7 @@ def display_meal_plan(meal_plan):
     st.write("")
     for meal_info in meals:
       st.markdown(f"<h1 style='text-align: center; font-size: 20px;background-color: lightblue; padding: 10px;'>{meal_info['Meal']}</h1>", unsafe_allow_html=True)
-      with st.expander("**تفاصيل الوجبة**"):
+      with st.expander("**تفاصيل الوجبة**", expanded=True):
           st.write(f"Calories : {meal_info['Calories']}kcal")
           st.write(f"**مكونات الوجبة  (gm)**  : {meal_info['Ingredients']}")
           st.write(f"**وزن الوجبة**  : {meal_info['Weight (g)']}  جرام")
@@ -352,32 +221,29 @@ def display_meal_plan(meal_plan):
 
 
 
-
-      
-      
-
 def user_input_page():
-    st.title("AI Calorie Calculator")
+    st.title("Ai Calorie Calculator and Meal Generator")
+    st.markdown(f"<h1 style='text-align: center; font-size: 12px;background-color: lightgreen; padding: 10px;'>Programmed by Afandy  .  Supervised By : Dr Hassan and Dr Gehad</h1>", unsafe_allow_html=True)
 
+    st.warning(f"Choose your weight goal from the side bar befor calculating and *Results*")
     # Title
-    st.title("البيانات")
+    st.title("Patient Data")
 
     # Patient information inputs
     patient_name = st.text_input("Enter patient Name")
-    age = st.number_input("Enter patient age", min_value=10, max_value=150, step=1)
+    age = st.number_input("Enter patient age", min_value=1, max_value=150, step=1)
     gender = st.selectbox("Select your gender", options=["Male", "Female", "Other"])
 
     # Weight and height input
     st.subheader("Weight and Height:")
-    weight = st.number_input("Enter your weight (kg)", min_value=50.0, step=1.0)
-    height = st.number_input("Enter your height (cm)", min_value=100.0, step=1.0)
+    weight = st.number_input("Enter your weight (kg)", min_value=10.0, step=1.0)
+    height = st.number_input("Enter your height (cm)", min_value=50.0, step=1.0)
 
     # Body composition input
     st.subheader("Body Composition:")
-    body_fat_percentage = st.number_input("Enter your body fat percentage (%)", min_value=0.0, max_value=100.0, step=0.1)
+    body_fat_percentage = st.number_input("Enter your body fat percentage (%)", min_value=5.0, max_value=100.0, step=0.1)
     waist_to_hip_ratio = st.number_input("Enter your waist-to-hip ratio", min_value=0.0, step=0.01)
-    lean_body_mass = st.number_input("Enter your lean body mass (kg)", min_value=0.0, step=0.1)
-
+    lean_body_mass = st.number_input("Enter your lean body mass (kg)", min_value=5.0, step=0.1)
 
     # Calculate BMI
     bmi = calculate_bmi(weight, height)
@@ -429,8 +295,23 @@ def user_input_page():
     # Read meals from CSV
     meals_df = pd.read_csv("food.csv", encoding='utf-8-sig')
 
-
+    # Buttons
+    if st.button("Save Patient Data"):
+        patient_data = {
+            "patient_name": patient_name,
+            "age": age,
+            "gender": gender,
+            "weight": weight,
+            "height": height,
+            "body_fat_percentage": body_fat_percentage,
+            "waist_to_hip_ratio": waist_to_hip_ratio,
+            "lean_body_mass": lean_body_mass
+        }
+        # save_patient_data(patient_data)
+        st.success("Patient data saved successfully.")
+    
     # Display calculated metrics
+    st.header("Results")
     if st.button("Results"):
         st.subheader("Calculated Metrics:")
         # BMI
@@ -479,7 +360,7 @@ def user_input_page():
         st.info(
             f"Total Body Water (TBW): {tbw:.2f} liters - Total Body Water is the total amount of water present in the body."
         )
-
+        st.write("----")
         # Ideal Body Weight
         # Ideal body weight calculated using the Devine formula indicates an estimate of the weight that is considered healthy for the given height and gender.
         if gender == "Male":
@@ -497,76 +378,42 @@ def user_input_page():
             )
         else:
             st.error("Unable to calculate ideal body weight: Gender not specified.")
-
-    # Recommended Metrics section
-    st.subheader("Recommended Metrics:")
-    if st.button("Show Recommended Daily Calorie Intake"):
-        st.write(
-            f"Recommended Daily Calorie Intake: {calorie_intake:.2f} kcal/day")
-        # Ideal Body Weight
-        # Ideal body weight calculated using the Devine formula indicates an estimate of the weight that is considered healthy for the given height and gender.
-        if gender == "Male":
-            ideal_body_weight = 50 + 2.3 * (
-                    (height * 0.393701) - 60)  # Convert height to inches
-        elif gender == "Female":
-            ideal_body_weight = 45.5 + 2.3 * (
-                    (height * 0.393701) - 60)  # Convert height to inches
-        else:
-            ideal_body_weight = None
-
-        if ideal_body_weight:
-            st.info(
-                f"Ideal Body Weight (Devine formula): {ideal_body_weight:.2f} kg - Ideal Body Weight is an estimate of the weight considered healthy for the given height and gender."
-            )
-        else:
-            st.error("Unable to calculate ideal body weight: Gender not specified.")
+    st.write("----")    
+    st.success(
+            f"Recommended Daily Calorie Intake *According to your weight plan*: {calorie_intake:.2f} kcal/day")
 
 
 
-    # Buttons
-    if st.button("Save Patient Data"):
-        patient_data = {
-            "patient_name": patient_name,
-            "age": age,
-            "gender": gender,
-            "weight": weight,
-            "height": height,
-            "body_fat_percentage": body_fat_percentage,
-            "waist_to_hip_ratio": waist_to_hip_ratio,
-            "lean_body_mass": lean_body_mass
-        }
-        # save_patient_data(patient_data)
-        st.success("Patient data saved successfully.")
+    
+    # Display Meals
+    if st.checkbox("Generate Meals for one day"):  
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
 
-    if st.button("Search Patient"):
-        search_result = search_patient_by_name(patient_name)
-        if search_result:
-            display_patient_data_page(search_result)  # Display patient data page
-        else:
-            st.write("Patient not found.")
-
-    if st.button("Update Patient Data"):
-        updated_age = st.number_input("Enter updated age", value=age)
-        # update_patient_data(patient_name, {"age": updated_age})
-        st.success("Patient data updated successfully.")
-
-    # Button to display all patient data
-    if st.button("Display All Patient Data"):
-        display_all_patient_data()
-
-    # Button to display weight progression chart
-    if st.button("Display Weight Progression Chart"):
-        display_weight_progression_chart()
-
-    # Button to display patient metrics chart
-    if st.button("Display Patient Metrics Chart"):
-        st.write("<script>window.open('/')</script>", unsafe_allow_html=True)
-        display_patient_metrics_chart()
-
-
-    meal_plan = generate_meal_plan(calorie_intake, meals_df)
-    display_meal_plan(meal_plan)
+    details = st.checkbox("Generate Meals for Week")
+    if details:
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الأول</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الثاني</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الثالث</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الرابع</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الخامس</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم السادس</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم السابع</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
 
 
 if __name__ == "__main__":
-  user_input_page()
+    user_input_page()

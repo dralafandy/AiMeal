@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 import os
 import datetime
+import random
 
 
 # Define the file path for storing patient data
@@ -19,6 +20,7 @@ def save_patient_data(patient_data):
         # Add current date and time to the patient data
         patient_data["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current date and time
         writer.writerow(patient_data)
+
 
 
 def calculate_bmi(weight, height):
@@ -101,84 +103,42 @@ def calculate_tbw(weight, height, age, gender):
   return 0.3669 * k - 0.0906 * weight + 0.1074 * height + 0.2466 * weight
 
 
-def get_patient_weight_data(patient_data, patient_name):
-    # Placeholder implementation - Replace with actual data retrieval logic
-    # This function should retrieve weight data for the specified patient
-    if patient_data:
-        return patient_data.get('weight', {})
-    else:
-        return {}
-
-
-
-def display_patient_data_page(patient_data):
-    st.title("Patient Data")
-    st.write(f"Patient Name: {patient_data['patient_name']}")
-    st.write(f"Age: {patient_data['age']}")
-    st.write(f"Gender: {patient_data['gender']}")
-    st.write(f"Weight (kg): {patient_data['weight']}")
-    st.write(f"Height (cm): {patient_data['height']}")
-    st.write(f"Body Fat Percentage (%): {patient_data['body_fat_percentage']}")
-    st.write(f"Waist-to-Hip Ratio: {patient_data['waist_to_hip_ratio']}")
-    st.write(f"Lean Body Mass (kg): {patient_data['lean_body_mass']}")
-
-
-    return pdf_path
-
-# Define function to read meals and their calorie counts from CSV
-def read_meals_from_csv(csv_file):
-  meals_df = pd.read_csv("food.csv", encoding='utf-8-sig')
-  return meals_df
-# Save the meal plan as an image
-# Function to save meal plan as an image
-def save_meal_plan_as_image(meal_plan):
-    # Create a blank image with white background
-    image = Image.new('RGB', (800, 600), 'white')
-    draw = ImageDraw.Draw(image)
-
-    # Set font and size
-    font = ImageFont.truetype('arial.ttf', 24)
-
-    # Draw meal plan text
-    y = 50
-    for category, meals in meal_plan.items():
-        draw.text((50, y), category, fill='black', font=font)
-        y += 50
-        for meal_info in meals:
-            draw.text((100, y), f"{meal_info['Meal']} - Calories: {meal_info['Calories']}", fill='black', font=font)
-            y += 30
-
-    # Save the image
-    image.save('meal_plan.png')
 
 def generate_meal_plan(calorie_intake, meals_df):
     # Define the calorie distribution for each meal category based on the user's input calorie intake
     meal_categories = {
-        "الفطار": 0.25,
+        "الفطار":0.20,
         "الغداء": 0.40,
-        "العشاء": 0.25,
-        "سناكس": 0.10
+        "العشاء": 0.30,
+        "السناكس": 0.10
     }
+    
+    # Initialize empty dictionary to store meal plans for different categories
+    meal_plans = {}
 
-    # Calculate the calorie allowance for each meal category based on the recommended intake
-    calorie_allowance = {category: calorie_intake * percentage for category, percentage in meal_categories.items()}
+    # Iterate through meal categories
+    for meal_category, percentage in meal_categories.items():
+        # Calculate the calorie allowance for the specified meal category based on the recommended intake
+        calorie_allowance = calorie_intake * percentage
 
-    # Initialize empty lists to store selected meals for each category
-    meal_plan = {category: [] for category in meal_categories}
+        # Initialize empty list to store selected meals for the specified category
+        meal_plan = []
 
-    # Shuffle the DataFrame to get random meals
-    shuffled_meals = meals_df.sample(frac=1).reset_index(drop=True)
+        # Filter meals based on the specified category
+        category_meals = meals_df[meals_df["Category"] == meal_category]
 
+        # Randomize the meals
+        category_meals = category_meals.sample(frac=1)
 
-    for index, row in shuffled_meals.iterrows():
-        meal_name = row["Meal Name"]
-        meal_calories = row["Calories"]
-        
-        # Check if the meal fits into any of the categories based on remaining calorie allowance
-        for category, allowance in calorie_allowance.items():
-            if meal_calories <= allowance:
-                # Add the meal to the corresponding category
-                meal_plan[category].append({
+        # Iterate through meals in the specified category
+        for index, row in category_meals.iterrows():
+            meal_name = row["Meal Name"]
+            meal_calories = row["Calories"]
+
+            # Check if the meal fits into the calorie allowance
+            if meal_calories <= calorie_allowance:
+                # Add the meal to the meal plan
+                meal_plan.append({
                     "Meal": meal_name,
                     "Calories": meal_calories,
                     "Ingredients": row["Ingredients"],
@@ -186,46 +146,62 @@ def generate_meal_plan(calorie_intake, meals_df):
                     "Protein (g)": row["Protein (g)"],
                     "Carbohydrates (g)": row["Carbohydrates (g)"],
                     "Fat (g)": row["Fat (g)"],
-                    "Meal Type": row["Meal Type"]
+                    "Category": row["Category"],
+                    "Meal Type" : row["Meal Type"]
                 })
-                # Deduct the calories of the meal from the remaining allowance for the category
-                calorie_allowance[category] -= meal_calories
-                break  # Move to the next meal once added to a category
+                # Deduct the calories of the meal from the remaining allowance
+                calorie_allowance -= meal_calories
 
-    return meal_plan
+        # Store meal plan for the category
+        meal_plans[meal_category] = meal_plan
 
-
+    return meal_plans
 
 def display_meal_plan(meal_plan):
+
   total_calories = 0
   for category, meals in meal_plan.items():
     st.write("----")
-    st.markdown(f'<div style="text-align:center; font-size: 24px; background-color: lightblue; padding: 10px;">{category}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:center; font-size: 25px; background-color: lightgreen; padding: 10px;">{category}</div>', unsafe_allow_html=True)
     st.write("")
     for meal_info in meals:
       st.markdown(f"<h1 style='text-align: center; font-size: 20px;background-color: lightblue; padding: 10px;'>{meal_info['Meal']}</h1>", unsafe_allow_html=True)
-      with st.expander("**تفاصيل الوجبة**", expanded=True):
-          st.write(f"Calories : {meal_info['Calories']}kcal")
+      with st.expander("**تفاصيل الوجبة**"):
+          st.write(f"**Calorie**s : {meal_info['Calories']}kcal")
+          st.write(f"**Meal type** : {meal_info['Meal Type']}")
           st.write(f"**مكونات الوجبة  (gm)**  : {meal_info['Ingredients']}")
           st.write(f"**وزن الوجبة**  : {meal_info['Weight (g)']}  جرام")
           st.write(f"**البروتين**  : {meal_info['Protein (g)']}  جرام")
           st.write(f"**الكربوهيدرات**  : {meal_info['Carbohydrates (g)']}  جرام")
           st.write(f"**الدهون**  : {meal_info['Fat (g)']}  جرام")
+          st.write(f"**نوع الوجبة**  : {meal_info['Category']}")
 
 
 
       total_calories += meal_info['Calories']  # Add calories to total
   st.info(f"Total Calories of day meals : **{total_calories}** kcal")  # Display total calories
 
+# Function to read patient data
+def read_patient_data():
+    try:
+        patient_df = pd.read_csv(DATA_FILE)
+        return patient_df
+    except FileNotFoundError:
+        st.error("Patient data file not found.")
+        return None
+
+
+
 
 
 
 
 def user_input_page():
-    st.title("Ai Calorie Calculator and Meal Generator")
+    if "show_second_page" not in st.session_state or not st.session_state.show_second_page:
+      st.title("Ai Calorie Calculator and Meal Generator")
     st.markdown(f"<h1 style='text-align: center; font-size: 12px;background-color: lightgreen; padding: 10px;'>Programmed by Afandy  .  Supervised By : Dr Hassan and Dr Gehad</h1>", unsafe_allow_html=True)
 
-    st.warning(f"Choose your weight goal from the side bar befor *calculating* and *Results* **Default goal is Ideal body weight**")
+    st.warning(f"Choose your weight goal from the side bar befor calculating and *Results*")
     # Title
     st.title("Patient Data")
 
@@ -274,7 +250,7 @@ def user_input_page():
     weight_loss = st.sidebar.checkbox("Weight loss")
     weight_gain = st.sidebar.checkbox("Weight gain")
     maintenance = st.sidebar.checkbox("Maintenance")
-    fitness = st.sidebar.checkbox("Fitness", True)
+    fitness = st.sidebar.checkbox("Fitness")
     rapid_weight_loss = st.sidebar.checkbox("Rapid Weight Loss")
 
     goals = []
@@ -383,13 +359,15 @@ def user_input_page():
             f"Recommended Daily Calorie Intake *According to your weight plan*: {calorie_intake:.2f} kcal/day")
 
 
-
     
     # Display Meals
-    if st.checkbox("Generate Meals for one day"):  
+    if st.sidebar.button("Regenerate meals"):
         meal_plan = generate_meal_plan(calorie_intake, meals_df)
         display_meal_plan(meal_plan)
 
+    if st.checkbox("Generate Meals for one day"):  
+        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        display_meal_plan(meal_plan)
     details = st.checkbox("Generate Meals for Week")
     if details:
         st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الأول</h1>", unsafe_allow_html=True)
@@ -413,6 +391,10 @@ def user_input_page():
         st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم السابع</h1>", unsafe_allow_html=True)
         meal_plan = generate_meal_plan(calorie_intake, meals_df)
         display_meal_plan(meal_plan)
+
+
+
+
 
 
 if __name__ == "__main__":

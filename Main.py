@@ -361,7 +361,7 @@ def user_input_page():
 
     
     # Display Meals
-    if st.sidebar.button("Regenerate meals"):
+    if st.button("Regenerate meals"):
         meal_plan = generate_meal_plan(calorie_intake, meals_df)
         display_meal_plan(meal_plan)
 

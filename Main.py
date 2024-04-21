@@ -6,6 +6,7 @@ import datetime
 import random
 
 
+
 # Define the file path for storing patient data
 DATA_FILE = "patient_data.csv"
 
@@ -20,6 +21,7 @@ def save_patient_data(patient_data):
         # Add current date and time to the patient data
         patient_data["datetime"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Current date and time
         writer.writerow(patient_data)
+
 
 
 
@@ -80,10 +82,9 @@ def calculate_calorie_intake(tdee, goals, weight, ideal_weight):
     elif weight > ideal_weight:
       goals.append("Weight loss")
   if "Weight loss" in goals:
-    if "Rapid Weight Loss" in goals:
-      return tdee - 1000  # Subtract 1000 kcal/day for rapid weight loss
-    else:
       return tdee - 500
+  elif "Rapid Weight Loss" in goals:
+      return tdee - 1000  # Subtract 1000 kcal/day for rapid weight loss
   elif "Weight gain" in goals:
     return tdee + 500
   elif "Fitness" in goals:
@@ -104,8 +105,7 @@ def calculate_tbw(weight, height, age, gender):
 
 
 
-def generate_meal_plan(calorie_intake, meals_df):
-    # Define the calorie distribution for each meal category based on the user's input calorie intake
+def generate_meal_plan(calorie_intake, meals_df, protein_range=None, carb_range=None, fat_range=None):
     meal_categories = {
         "الفطار":0.20,
         "الغداء": 0.40,
@@ -113,31 +113,28 @@ def generate_meal_plan(calorie_intake, meals_df):
         "السناكس": 0.10
     }
     
-    # Initialize empty dictionary to store meal plans for different categories
     meal_plans = {}
+    total_nutrients = {"Protein (g)": 0, "Carbohydrates (g)": 0, "Fat (g)": 0}
 
-    # Iterate through meal categories
     for meal_category, percentage in meal_categories.items():
-        # Calculate the calorie allowance for the specified meal category based on the recommended intake
         calorie_allowance = calorie_intake * percentage
-
-        # Initialize empty list to store selected meals for the specified category
         meal_plan = []
-
-        # Filter meals based on the specified category
         category_meals = meals_df[meals_df["Category"] == meal_category]
 
-        # Randomize the meals
+        if protein_range:
+            category_meals = category_meals[(category_meals["Protein (g)"] >= protein_range[0]) & (category_meals["Protein (g)"] <= protein_range[1])]
+        if carb_range:
+            category_meals = category_meals[(category_meals["Carbohydrates (g)"] >= carb_range[0]) & (category_meals["Carbohydrates (g)"] <= carb_range[1])]
+        if fat_range:
+            category_meals = category_meals[(category_meals["Fat (g)"] >= fat_range[0]) & (category_meals["Fat (g)"] <= fat_range[1])]
+
         category_meals = category_meals.sample(frac=1)
 
-        # Iterate through meals in the specified category
         for index, row in category_meals.iterrows():
             meal_name = row["Meal Name"]
             meal_calories = row["Calories"]
 
-            # Check if the meal fits into the calorie allowance
             if meal_calories <= calorie_allowance:
-                # Add the meal to the meal plan
                 meal_plan.append({
                     "Meal": meal_name,
                     "Calories": meal_calories,
@@ -149,23 +146,35 @@ def generate_meal_plan(calorie_intake, meals_df):
                     "Category": row["Category"],
                     "Meal Type" : row["Meal Type"]
                 })
-                # Deduct the calories of the meal from the remaining allowance
                 calorie_allowance -= meal_calories
 
-        # Store meal plan for the category
+                # Add the nutrients of the meal to the total nutrients
+                total_nutrients["Protein (g)"] += row["Protein (g)"]
+                total_nutrients["Carbohydrates (g)"] += row["Carbohydrates (g)"]
+                total_nutrients["Fat (g)"] += row["Fat (g)"]
+
         meal_plans[meal_category] = meal_plan
 
+    # Check if the total nutrient intake is within the specified ranges
+    if protein_range and not (protein_range[0] <= total_nutrients["Protein (g)"] <= protein_range[1]):
+        st.warning("Total protein intake is out of the specified range!")
+    if carb_range and not (carb_range[0] <= total_nutrients["Carbohydrates (g)"] <= carb_range[1]):
+        st.warning("Total carbohydrate intake is out of the specified range!")
+    if fat_range and not (fat_range[0] <= total_nutrients["Fat (g)"] <= fat_range[1]):
+        st.warning("Total fat intake is out of the specified range!")
+
     return meal_plans
+
 
 def display_meal_plan(meal_plan):
 
   total_calories = 0
   for category, meals in meal_plan.items():
     st.write("----")
-    st.markdown(f'<div style="text-align:center; font-size: 25px; background-color: lightgreen; padding: 10px;">{category}</div>', unsafe_allow_html=True)
+    st.markdown(f'<h1 style="text-align:center; font-size: 22px; background-color: lightgreen; padding: 10px;">{category}</div>', unsafe_allow_html=True)
     st.write("")
     for meal_info in meals:
-      st.markdown(f"<h1 style='text-align: center; font-size: 20px;background-color: lightblue; padding: 10px;'>{meal_info['Meal']}</h1>", unsafe_allow_html=True)
+      st.markdown(f"<h1 style='text-align: center; font-size: 18px;background-color: lightgray; padding: 7px;'>{meal_info['Meal']}</h1>", unsafe_allow_html=True)
       with st.expander("**تفاصيل الوجبة**"):
           st.write(f"**Calorie**s : {meal_info['Calories']}kcal")
           st.write(f"**Meal type** : {meal_info['Meal Type']}")
@@ -207,19 +216,23 @@ def user_input_page():
 
     # Patient information inputs
     patient_name = st.text_input("Enter patient Name")
-    age = st.number_input("Enter patient age", min_value=1, max_value=150, step=1)
+    age = st.number_input("Enter patient age", value=30, step=1)
     gender = st.selectbox("Select your gender", options=["Male", "Female", "Other"])
 
     # Weight and height input
     st.subheader("Weight and Height:")
-    weight = st.number_input("Enter your weight (kg)", min_value=10.0, step=1.0)
-    height = st.number_input("Enter your height (cm)", min_value=50.0, step=1.0)
+    weight = st.number_input("Enter your weight (kg)", value=60.0, step=1.0)
+    height = st.number_input("Enter your height (cm)", value=150.0, step=1.0)
 
     # Body composition input
     st.subheader("Body Composition:")
     body_fat_percentage = st.number_input("Enter your body fat percentage (%)", min_value=5.0, max_value=100.0, step=0.1)
     waist_to_hip_ratio = st.number_input("Enter your waist-to-hip ratio", min_value=0.0, step=0.01)
     lean_body_mass = st.number_input("Enter your lean body mass (kg)", min_value=5.0, step=0.1)
+
+
+
+
 
     # Calculate BMI
     bmi = calculate_bmi(weight, height)
@@ -246,30 +259,49 @@ def user_input_page():
     tdee = calculate_tdee(bmr, activity_level)
 
     # Dietary goals selection
-    st.sidebar.subheader("Select your dietary goals:")
-    weight_loss = st.sidebar.checkbox("Weight loss")
-    weight_gain = st.sidebar.checkbox("Weight gain")
-    maintenance = st.sidebar.checkbox("Maintenance")
-    fitness = st.sidebar.checkbox("Fitness")
-    rapid_weight_loss = st.sidebar.checkbox("Rapid Weight Loss")
+   
+
+    st.subheader("Select your weight goals:")
+    weight_loss = st.checkbox("Weight loss")
+    weight_gain = st.checkbox("Weight gain")
+    maintenance = st.checkbox("Maintenance" ,value = True)
+    rapid_weight_loss = st.checkbox("Rapid Weight Loss")
+    st.subheader("Meals macronutritions :")
 
     goals = []
     if weight_loss:
         goals.append("Weight loss")
+        fat_range = st.slider('Fat (g)', min_value=0, max_value=50, value=(0, 35))
+        protein_range = st.slider('Protein (g)', min_value=0, max_value=50, value=(0, 75))
+        carb_range = st.slider('Carbohydrates (g)', min_value=0, max_value=100, value=(0, 150))
+
     if weight_gain:
         goals.append("Weight gain")
+        fat_range = st.slider('Fat (g)', min_value=0, max_value=50, value=(0, 40))
+        protein_range = st.slider('Protein (g)', min_value=0, max_value=200, value=(0, 56))
+        carb_range = st.slider('Carbohydrates (g)', min_value=0, max_value=300, value=(0, 300))
     if maintenance:
         goals.append("Maintenance")
-    if fitness:
-        goals.append("Fitness")
+        fat_range = st.slider('Fat (g)', min_value=0, max_value=50, value=(0, 15))
+        protein_range = st.slider('Protein (g)', min_value=0, max_value=200, value=(0, 30))
+        carb_range = st.slider('Carbohydrates (g)', min_value=0, max_value=300, value=(0, 65))
+
     if rapid_weight_loss:
         goals.append("Rapid Weight Loss")
+        fat_range = st.slider('Fat (g)', min_value=0, max_value=50, value=(0, 25))
+        protein_range = st.slider('Protein (g)', min_value=0, max_value=200, value=(0, 85))
+        carb_range = st.slider('Carbohydrates (g)', min_value=0, max_value=200, value=(0, 150))
+
+
+
 
     # Calculate calorie intake
     calorie_intake = calculate_calorie_intake(tdee, goals, weight, ideal_weight)
 
     # Read meals from CSV
     meals_df = pd.read_csv("food.csv", encoding='utf-8-sig')
+
+
 
     # Buttons
     if st.button("Save Patient Data"):
@@ -287,8 +319,7 @@ def user_input_page():
         st.success("Patient data saved successfully.")
     
     # Display calculated metrics
-    st.header("Results")
-    if st.button("Results"):
+        st.header("Results")
         st.subheader("Calculated Metrics:")
         # BMI
         if bmi < 18.5:
@@ -358,39 +389,51 @@ def user_input_page():
     st.success(
             f"Recommended Daily Calorie Intake *According to your weight plan*: {calorie_intake:.2f} kcal/day")
 
+    # Define the range for each nutrient
+
+    
+
+
+
+
 
     
     # Display Meals
-    if st.button("Regenerate meals"):
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+    if st.button("Generate meals"):
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
 
-    if st.checkbox("Generate Meals for one day"):  
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
-        display_meal_plan(meal_plan)
-    details = st.checkbox("Generate Meals for Week")
+
+
+
+
+
+
+    details = st.button("Generate Meals for Week")
     if details:
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الأول</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم الأول</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الثاني</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم الثاني</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الثالث</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم الثالث</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الرابع</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم الرابع</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم الخامس</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم الخامس</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم السادس</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم السادس</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
-        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 20px;background-color: #FFB6C1;'>اليوم السابع</h1>", unsafe_allow_html=True)
-        meal_plan = generate_meal_plan(calorie_intake, meals_df)
+        st.markdown(f"<h1 style='text-align: center;font-family: tahoma; font-size: 22px;background-color: #FFB6C1;'>اليوم السابع</h1>", unsafe_allow_html=True)
+        meal_plan = generate_meal_plan(calorie_intake, meals_df, protein_range, carb_range, fat_range)
         display_meal_plan(meal_plan)
+
+
 
 
 
